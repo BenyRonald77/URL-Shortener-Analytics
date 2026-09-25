@@ -1,0 +1,45 @@
+// Prisma schema — URL Shortener + Analytics
+// Default provider: SQLite (mudah dijalankan lokal). Untuk production ganti
+// provider ke "postgresql" dan sesuaikan DATABASE_URL (lihat README.md).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Link {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  longUrl     String
+  clickCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  clicks Click[]
+}
+
+// device: "desktop" | "mobile" | "tablet" | "bot" | "unknown" — lihat src/lib/constants.ts
+model Click {
+  id        String   @id @default(cuid())
+  linkId    String
+  country   String   @default("Unknown")
+  device    String   @default("unknown")
+  browser   String   @default("Unknown")
+  referrer  String?
+  createdAt DateTime @default(now())
+
+  link Link @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@index([linkId, createdAt])
+}
